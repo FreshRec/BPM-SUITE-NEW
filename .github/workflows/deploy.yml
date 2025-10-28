@@ -40,4 +40,3 @@ jobs:
           source: ./dist/
 
           # Удалять из бакета файлы, которых нет в source
-          delete: true
