@@ -32,7 +32,8 @@ jobs:
 
       # 5. Синхронизируем собранные файлы с бакетом в Yandex Object Storage
       - name: Sync files to Yandex Cloud S3
-        uses: yc-actions/yc-s3-sync@v0.2.0
+        # ИСПОЛЬЗУЕМ ПОЛНЫЙ ХЭШ ВМЕСТО ТЕГА ВЕРСИИ ДЛЯ НАДЕЖНОСТИ
+        uses: yc-actions/yc-s3-sync@016c524a1b528a4e10c1f54f201f98c962b14421
         with:
           # Учетные данные сервисного аккаунта (должны быть в секретах GitHub)
           # Название секрета: YC_SA_JSON_CREDENTIALS
