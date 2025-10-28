@@ -1,1 +1,44 @@
+# .github/workflows/deploy.yml
+name: Deploy to Yandex Cloud
+
+on:
+  push:
+    branches:
+      - main # Запускать при пуше в ветку main
+      - master # Также можно добавить master, если это основная ветка
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # Используем Node.js 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build # Собираем статические файлы в папку dist
+
+      - name: Deploy to Yandex.Cloud S3
+        uses: yandex-cloud/yc-s3-sync-action@v1
+        with:
+          # ID и секретный ключ статического ключа доступа сервисного аккаунта
+          yc-key-id: ${{ secrets.YC_KEY_ID }}
+          yc-secret-key: ${{ secrets.YC_SECRET_KEY }}
+
+          # Имя бакета, как вы и просили
+          bucket: bpm-suite
+
+          # Папка с собранным проектом
+          source: ./dist/
+
+          # Удалять из бакета файлы, которых нет в source
+          delete: true
 
