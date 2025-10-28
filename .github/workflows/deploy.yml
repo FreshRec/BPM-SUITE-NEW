@@ -34,9 +34,10 @@ jobs:
           yc-secret-key: ${{ secrets.YC_SECRET_KEY }}
 
           # Имя бакета, как вы и просили
-          bucket: bpm-calculator
+          bucket: bpm-suite
 
           # Папка с собранным проектом
           source: ./dist/
 
           # Удалять из бакета файлы, которых нет в source
+          delete: true
