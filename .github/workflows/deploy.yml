@@ -1,36 +1,49 @@
-# .github/workflows/deploy.yml
-name: Deploy to Yandex Cloud
+name: Build and Deploy to Yandex Cloud Storage
 
+# Этот workflow запускается при каждом push в ветку "main"
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ "main" ]
 
 jobs:
   build_and_deploy:
+    name: Build and Deploy
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
 
+    steps:
+      # 1. Получаем код из репозитория
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Устанавливаем Node.js нужной версии
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '18' # Версия Node.js, используемая в вашем проекте
           cache: 'npm'
 
+      # 3. Устанавливаем зависимости проекта
       - name: Install dependencies
         run: npm install
 
-      - name: Build project
+      # 4. Собираем приложение для продакшена (создается папка 'dist')
+      - name: Build application
         run: npm run build
 
-      - name: Deploy to Yandex.Cloud S3
-        uses: yandex-cloud/yc-s3-sync-action@v1
+      # 5. Синхронизируем собранные файлы с бакетом в Yandex Object Storage
+      - name: Sync files to Yandex Cloud S3
+        uses: yc-actions/yc-s3-sync@v0.2.0
         with:
-          yc-key-id: ${{ secrets.YC_KEY_ID }}
-          yc-secret-key: ${{ secrets.YC_SECRET_KEY }}
-          bucket: bpm-suite
-          source: ./dist/
-          delete: true
+          # Учетные данные сервисного аккаунта (должны быть в секретах GitHub)
+          # Название секрета: YC_SA_JSON_CREDENTIALS
+          YC_SA_JSON_CREDENTIALS: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
+
+          # Имя вашего бакета (должно быть в секретах GitHub)
+          # Название секрета: S3_BUCKET
+          BUCKET: ${{ secrets.S3_BUCKET }}
+          
+          # Эндпоинт для Object Storage
+          S3_ENDPOINT: https://storage.yandexcloud.net
+
+          # Папка с собранным проектом, которую нужно загрузить
+          SOURCE_DIR: 'dist'
