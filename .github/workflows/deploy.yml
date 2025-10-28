@@ -1,6 +1,5 @@
 name: Build and Deploy to Yandex Cloud Storage
 
-# Этот workflow запускается при каждом push в ветку "main"
 on:
   push:
     branches: [ "main" ]
@@ -19,7 +18,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18' # Версия Node.js, используемая в вашем проекте
+          node-version: '18'
           cache: 'npm'
 
       # 3. Устанавливаем зависимости проекта
@@ -30,21 +29,23 @@ jobs:
       - name: Build application
         run: npm run build
 
-      # 5. Синхронизируем собранные файлы с бакетом в Yandex Object Storage
-      - name: Sync files to Yandex Cloud S3
-        # ИСПОЛЬЗУЕМ ПОЛНЫЙ ХЭШ ВМЕСТО ТЕГА ВЕРСИИ ДЛЯ НАДЕЖНОСТИ
-        uses: yc-actions/yc-s3-sync@016c524a1b528a4e10c1f54f201f98c962b14421
-        with:
-          # Учетные данные сервисного аккаунта (должны быть в секретах GitHub)
-          # Название секрета: YC_SA_JSON_CREDENTIALS
-          YC_SA_JSON_CREDENTIALS: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
+      # 5. Устанавливаем официальный Yandex Cloud CLI
+      - name: Install Yandex Cloud CLI
+        uses: yc-actions/yc-cli-install@v2.2.0
 
-          # Имя вашего бакета (должно быть в секретах GitHub)
-          # Название секрета: S3_BUCKET
-          BUCKET: ${{ secrets.S3_BUCKET }}
-          
-          # Эндпоинт для Object Storage
-          S3_ENDPOINT: https://storage.yandexcloud.net
+      # 6. Аутентификация в Yandex Cloud через сервисный аккаунт
+      - name: Authenticate in Yandex Cloud
+        run: |
+          yc config profile create sa-profile --key='${{ secrets.YC_SA_JSON_CREDENTIALS }}'
+          yc config set cloud-id $(yc config get cloud-id)
+          yc config set folder-id $(yc config get folder-id)
 
-          # Папка с собранным проектом, которую нужно загрузить
-          SOURCE_DIR: 'dist'
+      # 7. Синхронизируем файлы с бакетом Object Storage
+      - name: Sync files to Yandex Object Storage
+        env:
+          BUCKET_NAME: ${{ secrets.S3_BUCKET }}
+        run: |
+          yc storage bucket sync \
+            --endpoint-url https://storage.yandexcloud.net \
+            dist/ s3://${BUCKET_NAME}/ \
+            --delete
