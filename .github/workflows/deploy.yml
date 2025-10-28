@@ -27,7 +27,7 @@ jobs:
         run: npm run build # Собираем статические файлы в папку dist
 
       - name: Deploy to Yandex.Cloud S3
-        uses: yandex-cloud/yc-actions/yc-s3-sync@v0.0.3
+        uses: yandex-cloud/yc-s3-sync-action@v1
         with:
           # ID и секретный ключ статического ключа доступа сервисного аккаунта
           yc-key-id: ${{ secrets.YC_KEY_ID }}
